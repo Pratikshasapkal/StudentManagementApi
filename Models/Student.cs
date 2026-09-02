@@ -7,4 +7,8 @@ public class Student
     public string Email { get; set;}
 
     public int Age { get; set; }
+
+    public int? CourseId { get; set; }
+
+    public Course? Course { get; set; }
 }

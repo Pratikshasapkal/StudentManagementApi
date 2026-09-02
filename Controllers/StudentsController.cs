@@ -63,9 +63,11 @@ public class StudentsController : ControllerBase
 
     public async Task<IActionResult> DeleteStudentById(int id)
     {
-        var student = await _context.Students.FindAsync(id);
+        var student = await _context.Students
+    .Include(s => s.Course)
+    .FirstOrDefaultAsync(s => s.Id == id);
 
-        if(student == null)
+        if (student == null)
         {
             return NotFound();
         }
@@ -84,7 +86,7 @@ public class StudentsController : ControllerBase
     {
         var existingStudent = await _context.Students.FindAsync(id);
 
-        if(existingStudent == null)
+        if (existingStudent == null)
         {
             return NotFound();
         }
@@ -97,4 +99,29 @@ public class StudentsController : ControllerBase
 
         return Ok(existingStudent);
     }
+
+    //Asigning course to student
+    [HttpPut("{studentId}/course/{courseId}")]
+    public async Task<IActionResult> AssignCourse(int studentId, int courseId)
+    {
+        var student = await _context.Students.FindAsync(studentId);
+
+        if (student == null)
+        {
+            return NotFound("Student not found");
+        }
+
+        var course = await _context.Courses.FindAsync(courseId);
+
+        if(course == null)
+        {
+            return NotFound("Course not found");
+        }
+
+        student.CourseId = courseId;
+        await _context.SaveChangesAsync();
+
+        return Ok(student);
+    }
+
 }
