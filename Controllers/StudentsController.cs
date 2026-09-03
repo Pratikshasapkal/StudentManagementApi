@@ -20,7 +20,19 @@ public class StudentsController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetStudents()
     {
-        var students = await _context.Students.ToListAsync();
+        var students = await _context.Students
+            .Include(s => s.Course)
+            .Select(s => new StudentResponseDto
+            {
+                Id = s.Id,
+                Name = s.Name,
+                Email = s.Email,
+                Age = s.Age,
+                CourseId = s.CourseId,
+                CourseName = s.Course != null ? s.Course.Name : null
+
+            })
+            .ToListAsync();
 
         return Ok(students);
     }
@@ -29,7 +41,18 @@ public class StudentsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> GetStudentById(int id)
     {
-        var student = await _context.Students.FindAsync(id);
+        var student = await _context.Students
+            .Include(s => s.Course)
+            .Where(s => s.Id == id)
+            .Select(s => new StudentResponseDto
+            {
+                Id = s.Id,
+                Name = s.Name,
+                Email = s.Email,
+                Age = s.Age,
+                CourseId = s.CourseId,
+                CourseName = s.Course != null ? s.Course.Name : null
+            }).FirstOrDefaultAsync();
 
         if (student == null)
         {
@@ -54,7 +77,11 @@ public class StudentsController : ControllerBase
 
         await _context.SaveChangesAsync();
 
-        return Ok(student);
+        return CreatedAtAction(
+            nameof(GetStudentById),
+            new { id = student.Id },
+            student
+        );
     }
 
 
@@ -113,7 +140,7 @@ public class StudentsController : ControllerBase
 
         var course = await _context.Courses.FindAsync(courseId);
 
-        if(course == null)
+        if (course == null)
         {
             return NotFound("Course not found");
         }

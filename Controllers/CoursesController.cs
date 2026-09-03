@@ -61,7 +61,11 @@ public class CoursesController : ControllerBase
         await _context.Courses.AddAsync(course);
         await _context.SaveChangesAsync();
 
-        return Ok(course);
+        return CreatedAtAction(
+            nameof(GetCourseById),
+            new {id = course.Id},
+            course
+        );
     }
 
     //Get students for a specific course
