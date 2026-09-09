@@ -3,6 +3,7 @@ using StudentManagementApi.Data;
 using Microsoft.EntityFrameworkCore;
 using StudentManagementApi.DTOs;
 using StudentManagementApi.Models;
+using StudentManagementApi.Services;
 
 namespace StudentManagemntApi.Controllers;
 
@@ -10,19 +11,18 @@ namespace StudentManagemntApi.Controllers;
 [Route("api/[controller]")]
 public class CoursesController : ControllerBase
 {
-    private readonly AppDbContext _context;
+    private readonly CourseService _courseService;
 
-    public CoursesController(AppDbContext context)
+    public CoursesController(AppDbContext context, CourseService courseService)
     {
-        _context = context;
+        _courseService = courseService;
     }
 
     //Get Courses
     [HttpGet]
     public async Task<IActionResult> GetCourses()
     {
-        var courses = await _context.Courses.ToListAsync();
-
+        var courses = await _courseService.GetCoursesAsync();
         return Ok(courses);
     }
 
@@ -30,40 +30,25 @@ public class CoursesController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> GetCourseById(int id)
     {
-        var course = await _context.Courses.FindAsync(id);
+        var courses = await _courseService.GetCourseByIdAsync(id);
 
-        if (course == null)
+        if (courses == null)
         {
-            return NotFound();
+            return NotFound("Course Not Found");
         }
 
-        return Ok(course);
+        return Ok(courses);
     }
 
     //Post new Course
     [HttpPost]
-    public async Task<IActionResult> CreateCourse(CourseCreateDto dto, int studentId)
+    public async Task<IActionResult> CreateCourse(CourseCreateDto dto)
     {
-        var course = new Course
-        {
-            Name = dto.Name,
-            DurationInMonths = dto.DurationInMonths
-        };
-
-        var student = await _context.Students.FindAsync(studentId);
-
-        if (student == null)
-        {
-            return NotFound("Student not found");
-        }
-
-
-        await _context.Courses.AddAsync(course);
-        await _context.SaveChangesAsync();
+        var course = await _courseService.CreateCourseAsync(dto);
 
         return CreatedAtAction(
             nameof(GetCourseById),
-            new {id = course.Id},
+            new { id = course.Id },
             course
         );
     }
@@ -72,25 +57,44 @@ public class CoursesController : ControllerBase
     [HttpGet("{courseId}/students")]
     public async Task<IActionResult> GetStudentsByCourseId(int courseId)
     {
-        var course = await _context.Courses.FindAsync(courseId);
+        var students = await _courseService
+            .GetStudentsByCourseIdAsync(courseId);
+
+        if (students == null)
+        {
+            return NotFound("Course Not Found");
+        }
+
+        return Ok(students);
+    }
+
+    //Put/Update Course
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateCourseById(
+        int id,
+        CourseUpdateDto dto)
+    {
+        var course = await _courseService.UpdateCourseAsync(id, dto);
 
         if (course == null)
         {
-            return NotFound();
+            return NotFound("Course Not Found");
         }
 
-        var students = await _context.Students
-            .Where(s => s.CourseId == courseId)
-            .Select(s => new
-            {
-                s.Id,
-                s.Name,
-                s.Email,
-                s.Age,
-                s.CourseId
-            })
-            .ToListAsync();
+        return Ok(course);
+    }
 
-        return Ok(students);
+    //Delete courseConfirmDelete(int id)
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteCourseById(int id)
+    {
+        var deleted = await _courseService.DeleteCourseAsync(id);
+
+        if (!deleted)
+        {
+            return NotFound("Course not found");
+        }
+
+        return NoContent();
     }
 }

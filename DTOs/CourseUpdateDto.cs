@@ -1,8 +1,8 @@
-using System.ComponentModel.DataAnnotations;
-
 namespace StudentManagementApi.DTOs;
 
-public class CourseCreateDto
+using System.ComponentModel.DataAnnotations;
+
+public class CourseUpdateDto
 {
     [Required]
     [StringLength(100, MinimumLength = 2)]

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using StudentManagementApi.Models;
 using StudentManagementApi.Data;
 using StudentManagementApi.DTOs;
+using StudentManagementApi.Services;
 
 namespace StudentManagementApi.Controllers;
 
@@ -10,29 +11,17 @@ namespace StudentManagementApi.Controllers;
 [Route("api/[controller]")]
 public class StudentsController : ControllerBase
 {
-    private readonly AppDbContext _context;
+    private readonly StudentService _studentService;
 
-    public StudentsController(AppDbContext context)
+    public StudentsController(StudentService studentService)
     {
-        _context = context;
+        _studentService = studentService;
     }
 
     [HttpGet]
     public async Task<IActionResult> GetStudents()
     {
-        var students = await _context.Students
-            .Include(s => s.Course)
-            .Select(s => new StudentResponseDto
-            {
-                Id = s.Id,
-                Name = s.Name,
-                Email = s.Email,
-                Age = s.Age,
-                CourseId = s.CourseId,
-                CourseName = s.Course != null ? s.Course.Name : null
-
-            })
-            .ToListAsync();
+        var students = await _studentService.GetStudentsAsync();
 
         return Ok(students);
     }
@@ -41,18 +30,7 @@ public class StudentsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> GetStudentById(int id)
     {
-        var student = await _context.Students
-            .Include(s => s.Course)
-            .Where(s => s.Id == id)
-            .Select(s => new StudentResponseDto
-            {
-                Id = s.Id,
-                Name = s.Name,
-                Email = s.Email,
-                Age = s.Age,
-                CourseId = s.CourseId,
-                CourseName = s.Course != null ? s.Course.Name : null
-            }).FirstOrDefaultAsync();
+        var student = await _studentService.GetStudentByIdAsync(id);
 
         if (student == null)
         {
@@ -64,24 +42,16 @@ public class StudentsController : ControllerBase
 
     // Post request to add a new student
     [HttpPost]
-    public async Task<IActionResult> Createstudent(StudentCreateDto dto)
+    public async Task<IActionResult> CreateStudent(StudentCreateDto dto)
     {
-        var student = new Student
-        {
-            Name = dto.Name,
-            Email = dto.Email,
-            Age = dto.Age
-        };
-
-        _context.Students.Add(student);
-
-        await _context.SaveChangesAsync();
+        var student = await _studentService.CreateStudentAsync(dto);
 
         return CreatedAtAction(
             nameof(GetStudentById),
             new { id = student.Id },
             student
         );
+
     }
 
 
@@ -90,18 +60,12 @@ public class StudentsController : ControllerBase
 
     public async Task<IActionResult> DeleteStudentById(int id)
     {
-        var student = await _context.Students
-    .Include(s => s.Course)
-    .FirstOrDefaultAsync(s => s.Id == id);
+        var delete = await _studentService.DeleteStudentById(id);
 
-        if (student == null)
+        if (!delete)
         {
-            return NotFound();
+            return NotFound("Student Not Found");
         }
-
-        _context.Students.Remove(student);
-
-        await _context.SaveChangesAsync();
 
         return NoContent();
     }
@@ -109,44 +73,32 @@ public class StudentsController : ControllerBase
     //Put/Update Student
     [HttpPut("{id}")]
 
-    public async Task<IActionResult> UpdateStudentById(int id, Student student)
+    public async Task<IActionResult> UpdateStudentById(int id, StudentUpdateDto dto)
     {
-        var existingStudent = await _context.Students.FindAsync(id);
+        var student = await _studentService.UpdateStudent(id, dto);
 
-        if (existingStudent == null)
+        if(student == null)
         {
-            return NotFound();
+            return NotFound("Student Not Found");
         }
 
-        existingStudent.Name = student.Name;
-        existingStudent.Email = student.Email;
-        existingStudent.Age = student.Age;
-
-        await _context.SaveChangesAsync();
-
-        return Ok(existingStudent);
+        return Ok(student);
     }
 
     //Asigning course to student
     [HttpPut("{studentId}/course/{courseId}")]
-    public async Task<IActionResult> AssignCourse(int studentId, int courseId)
+    public async Task<IActionResult> AssignCourse(
+        int studentId,
+        int courseId)
     {
-        var student = await _context.Students.FindAsync(studentId);
+        var student = await _studentService.AssignCourseAsync(
+            studentId,
+            courseId);
 
         if (student == null)
         {
-            return NotFound("Student not found");
+            return NotFound("Student or Course not found");
         }
-
-        var course = await _context.Courses.FindAsync(courseId);
-
-        if (course == null)
-        {
-            return NotFound("Course not found");
-        }
-
-        student.CourseId = courseId;
-        await _context.SaveChangesAsync();
 
         return Ok(student);
     }
