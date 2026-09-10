@@ -5,7 +5,7 @@ using StudentManagementApi.Models;
 
 namespace StudentManagementApi.Services;
 
-public class StudentService
+public class StudentService : IStudentService
 {
     private readonly AppDbContext _context;
 

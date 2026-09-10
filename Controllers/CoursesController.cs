@@ -11,9 +11,9 @@ namespace StudentManagemntApi.Controllers;
 [Route("api/[controller]")]
 public class CoursesController : ControllerBase
 {
-    private readonly CourseService _courseService;
+    private readonly ICourseService _courseService;
 
-    public CoursesController(AppDbContext context, CourseService courseService)
+    public CoursesController(ICourseService courseService)
     {
         _courseService = courseService;
     }

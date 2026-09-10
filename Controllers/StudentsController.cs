@@ -11,9 +11,9 @@ namespace StudentManagementApi.Controllers;
 [Route("api/[controller]")]
 public class StudentsController : ControllerBase
 {
-    private readonly StudentService _studentService;
+    private readonly IStudentService _studentService;
 
-    public StudentsController(StudentService studentService)
+    public StudentsController(IStudentService studentService)
     {
         _studentService = studentService;
     }
@@ -77,7 +77,7 @@ public class StudentsController : ControllerBase
     {
         var student = await _studentService.UpdateStudent(id, dto);
 
-        if(student == null)
+        if (student == null)
         {
             return NotFound("Student Not Found");
         }
