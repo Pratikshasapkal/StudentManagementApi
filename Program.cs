@@ -4,7 +4,7 @@ using StudentManagementApi.Services;
 using StudentManagementApi.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
-
+builder.Services.AddOpenApi();
 
 builder.Services.AddControllers();
 
@@ -16,6 +16,14 @@ builder.Services.AddScoped<IStudentService, StudentService>();
 builder.Services.AddScoped<ICourseService, CourseService>();
 
 var app = builder.Build();
+app.MapOpenApi();
+
+app.UseSwaggerUI(options =>
+{
+    options.SwaggerEndpoint(
+        "/openapi/v1.json",
+        "StudentManagementApi v1");
+});
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 

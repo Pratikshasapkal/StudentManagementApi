@@ -27,7 +27,7 @@ public class CoursesController : ControllerBase
     }
 
     //Get Course By Id
-    [HttpGet("{id}")]
+    [HttpGet("{id:int}")]
     public async Task<IActionResult> GetCourseById(int id)
     {
         var courses = await _courseService.GetCourseByIdAsync(id);
