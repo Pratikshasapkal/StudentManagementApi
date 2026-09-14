@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using StudentManagementApi.Data;
 using StudentManagementApi.Services;
+using StudentManagementApi.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,7 +17,9 @@ builder.Services.AddScoped<ICourseService, CourseService>();
 
 var app = builder.Build();
 
-app.UseHttpsRedirection();
+app.UseMiddleware<ExceptionHandlingMiddleware>();
+
+///app.UseHttpsRedirection();
 
 app.MapControllers();
 

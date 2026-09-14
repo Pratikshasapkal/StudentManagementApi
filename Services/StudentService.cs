@@ -2,20 +2,27 @@ using Microsoft.EntityFrameworkCore;
 using StudentManagementApi.Data;
 using StudentManagementApi.DTOs;
 using StudentManagementApi.Models;
+using Microsoft.Extensions.Logging;
 
 namespace StudentManagementApi.Services;
 
 public class StudentService : IStudentService
 {
     private readonly AppDbContext _context;
+    private readonly ILogger<StudentService> _logger;
 
-    public StudentService(AppDbContext context)
+    public StudentService(
+        AppDbContext context,
+        ILogger<StudentService> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     public async Task<List<StudentResponseDto>> GetStudentsAsync()
     {
+        _logger.LogInformation("Fetching All Students.");
+
         return await _context.Students
             .Include(s => s.Course)
             .Select(s => new StudentResponseDto
@@ -31,6 +38,8 @@ public class StudentService : IStudentService
 
     public async Task<StudentResponseDto?> GetStudentByIdAsync(int id)
     {
+        _logger.LogInformation("Fetching Student with id {StudentId}", id);
+
         return await _context.Students
               .Include(s => s.Course)
               .Where(s => s.Id == id)
@@ -47,6 +56,9 @@ public class StudentService : IStudentService
 
     public async Task<StudentResponseDto> CreateStudentAsync(StudentCreateDto dto)
     {
+
+        _logger.LogInformation($"Create student with Email {dto.Email})");
+
         var student = new Student
         {
             Name = dto.Name,
@@ -57,6 +69,10 @@ public class StudentService : IStudentService
         _context.Students.Add(student);
 
         await _context.SaveChangesAsync();
+
+        _logger.LogInformation(
+        "Student created successfully with ID {StudentId}.",
+        student.Id);
 
         return new StudentResponseDto
         {
@@ -72,10 +88,14 @@ public class StudentService : IStudentService
     //UpdateStudentById
     public async Task<StudentResponseDto?> UpdateStudent(int id, StudentUpdateDto dto)
     {
+
+        _logger.LogInformation("Updating student with id : {StudentId}.", id);
+
         var existingStudent = await _context.Students.FindAsync(id);
 
         if (existingStudent == null)
         {
+            _logger.LogInformation("Student not found with id {StudentId}.", id);
             return null;
         }
 
@@ -87,6 +107,11 @@ public class StudentService : IStudentService
             {
                 return null;
             }
+
+            _logger.LogInformation(
+            "Student with ID {StudentId} updated successfully.",
+            id);
+            
         }
 
         existingStudent.Name = dto.Name;
@@ -117,7 +142,7 @@ public class StudentService : IStudentService
     {
         var student = await _context.Students.FindAsync(id);
 
-        if(student == null)
+        if (student == null)
         {
             return false;
         }
@@ -129,10 +154,10 @@ public class StudentService : IStudentService
     }
 
     //Asign course by Id 
-        public async Task<StudentResponseDto?> AssignCourseAsync(
-        int studentId,
-        int courseId)
-        {
+    public async Task<StudentResponseDto?> AssignCourseAsync(
+    int studentId,
+    int courseId)
+    {
         var student = await _context.Students.FindAsync(studentId);
 
         if (student == null)

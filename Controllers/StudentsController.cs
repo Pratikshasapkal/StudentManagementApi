@@ -18,6 +18,7 @@ public class StudentsController : ControllerBase
         _studentService = studentService;
     }
 
+    //Get All students
     [HttpGet]
     public async Task<IActionResult> GetStudents()
     {
@@ -27,7 +28,7 @@ public class StudentsController : ControllerBase
     }
 
     // Get student by ID
-    [HttpGet("{id}")]
+    [HttpGet("{id:int}")]
     public async Task<IActionResult> GetStudentById(int id)
     {
         var student = await _studentService.GetStudentByIdAsync(id);
