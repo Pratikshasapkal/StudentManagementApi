@@ -24,6 +24,7 @@ public class StudentService : IStudentService
         _logger.LogInformation("Fetching All Students.");
 
         return await _context.Students
+            .AsNoTracking()
             .Include(s => s.Course)
             .Select(s => new StudentResponseDto
             {
@@ -41,6 +42,7 @@ public class StudentService : IStudentService
         _logger.LogInformation("Fetching Student with id {StudentId}", id);
 
         return await _context.Students
+            .AsNoTracking()
               .Include(s => s.Course)
               .Where(s => s.Id == id)
               .Select(s => new StudentResponseDto
@@ -57,7 +59,7 @@ public class StudentService : IStudentService
     public async Task<StudentResponseDto> CreateStudentAsync(StudentCreateDto dto)
     {
 
-        _logger.LogInformation($"Create student with Email {dto.Email})");
+        _logger.LogInformation("Creating student with email {Email}", dto.Email);
 
         var student = new Student
         {
@@ -111,7 +113,7 @@ public class StudentService : IStudentService
             _logger.LogInformation(
             "Student with ID {StudentId} updated successfully.",
             id);
-            
+
         }
 
         existingStudent.Name = dto.Name;

@@ -15,7 +15,11 @@ public class AppDbContext : DbContext
 // ├── DbSet<Student> → Students table
 // │
 // └── DbSet<Course>  → Courses table
+// │
+// └── DbSet<User>  → Users table
     public DbSet<Student> Students { get; set; }
 
     public DbSet<Course> Courses { get; set; }
+
+    public DbSet<User> Users { get; set; }
 }
