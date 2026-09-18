@@ -8,7 +8,7 @@ public interface IStudentService
 
     Task<StudentResponseDto?> GetStudentByIdAsync(int id);
 
-    Task<StudentResponseDto> CreateStudentAsync(StudentCreateDto dto);
+    Task<StudentResponseDto?> CreateStudentAsync(StudentCreateDto dto);
 
     Task<StudentResponseDto?> UpdateStudent(int id, StudentUpdateDto dto);
 

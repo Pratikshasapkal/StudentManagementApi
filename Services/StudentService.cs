@@ -25,7 +25,6 @@ public class StudentService : IStudentService
 
         return await _context.Students
             .AsNoTracking()
-            .Include(s => s.Course)
             .Select(s => new StudentResponseDto
             {
                 Id = s.Id,
@@ -43,21 +42,33 @@ public class StudentService : IStudentService
 
         return await _context.Students
             .AsNoTracking()
-              .Include(s => s.Course)
-              .Where(s => s.Id == id)
-              .Select(s => new StudentResponseDto
-              {
-                  Id = s.Id,
-                  Name = s.Name,
-                  Email = s.Email,
-                  Age = s.Age,
-                  CourseId = s.CourseId,
-                  CourseName = s.Course != null ? s.Course.Name : null
-              }).FirstOrDefaultAsync();
+            .Where(s => s.Id == id)
+            .Select(s => new StudentResponseDto
+            {
+                Id = s.Id,
+                Name = s.Name,
+                Email = s.Email,
+                Age = s.Age,
+                CourseId = s.CourseId,
+                CourseName = s.Course != null ? s.Course.Name : null
+            })
+            .FirstOrDefaultAsync();
     }
 
-    public async Task<StudentResponseDto> CreateStudentAsync(StudentCreateDto dto)
+    public async Task<StudentResponseDto?> CreateStudentAsync(StudentCreateDto dto)
     {
+        var existingStudent = await _context.Students
+                .AsNoTracking()
+                .AnyAsync(s => s.Email == dto.Email);
+
+        if (existingStudent)
+        {
+            _logger.LogWarning(
+                "Student with email {Email} already exists.",
+                dto.Email);
+
+            return null;
+        }
 
         _logger.LogInformation("Creating student with email {Email}", dto.Email);
 
@@ -101,6 +112,20 @@ public class StudentService : IStudentService
             return null;
         }
 
+        var emailExists = await _context.Students
+            .AsNoTracking()
+            .AnyAsync(s => s.Email == dto.Email && s.Id != id);
+
+        if (emailExists)
+        {
+            _logger.LogWarning(
+            "Cannot update student {StudentId}: email {Email} already belongs to another student.",
+            id,dto.Email);
+
+            throw new InvalidOperationException(
+            "A student with this email already exists.");
+        }
+
         if (dto.CourseId.HasValue)
         {
             var course = await _context.Courses.FindAsync(dto.CourseId.Value);
@@ -124,7 +149,6 @@ public class StudentService : IStudentService
         await _context.SaveChangesAsync();
 
         var updatedStudent = await _context.Students
-            .Include(s => s.Course)
             .Where(s => s.Id == id)
             .Select(s => new StudentResponseDto
             {

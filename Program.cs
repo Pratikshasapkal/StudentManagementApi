@@ -35,6 +35,17 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddControllers();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy
+            .AllowAnyOrigin()
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -56,7 +67,9 @@ app.UseSwaggerUI(options =>
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseAuthentication();
+app.UseCors("AllowFrontend");
 app.UseAuthorization();
+
 
 app.MapControllers();
 

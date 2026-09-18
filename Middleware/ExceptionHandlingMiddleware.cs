@@ -25,18 +25,36 @@ public class ExceptionHandlingMiddleware
         catch (Exception ex)
         {
 
+            if (ex is InvalidOperationException)
+            {
+                context.Response.StatusCode = (int)HttpStatusCode.Conflict;
+                context.Response.ContentType = "application/json";
+
+                var conflictResponse = new
+                {
+                    statusCode = 409,
+                    message = ex.Message
+                };
+
+                await context.Response.WriteAsync(
+                    JsonSerializer.Serialize(conflictResponse));
+
+                return;
+            }
+
             _logger.LogError(ex, "An unhandled exception occurred while processing the request.");
 
             context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
             context.Response.ContentType = "application/json";
 
-            var response = new
+            var errorResponse = new
             {
                 statusCode = 500,
                 message = "Unexpected Error Occured"
             };
 
-            await context.Response.WriteAsync(JsonSerializer.Serialize(response));
+            await context.Response.WriteAsync(JsonSerializer.Serialize(errorResponse));
         }
     }
+
 }

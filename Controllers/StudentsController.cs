@@ -56,6 +56,11 @@ public class StudentsController : ControllerBase
 
         var student = await _studentService.CreateStudentAsync(dto);
 
+        if (student is null)
+        {
+            return Conflict("A student with this email already exists.");
+        }
+
         _logger.LogInformation("Student with ID {StudentId} created successfully", student.Id);
 
         return CreatedAtAction(
@@ -88,7 +93,6 @@ public class StudentsController : ControllerBase
 
     //Put/Update Student
     [HttpPut("{id}")]
-
     public async Task<IActionResult> UpdateStudentById(int id, StudentUpdateDto dto)
     {
         var student = await _studentService.UpdateStudent(id, dto);
